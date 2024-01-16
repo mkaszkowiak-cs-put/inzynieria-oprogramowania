@@ -6,9 +6,4 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY . /app
 
-# This is needed - but it doesn't seem to work on a mounted volume
-#   using a different approach by putting an empty .gitignore in /static/
-# RUN mkdir -p /app/static 
-# RUN chown -R 1000:1000 /app/static
-
 CMD ["/start-reload.sh"]

@@ -73,11 +73,5 @@ def load_user(user_id):
 login_manager.init_app(flask_app)
 
 flask_admin = Admin(
-    flask_app, name="USOS", index_view=AuthIndexView(url=""), template_mode="bootstrap4"
+    flask_app, name="System zarządzający wynikami w kręglarstwie klasycznym", index_view=AuthIndexView(url=""), template_mode="bootstrap4"
 )
-flask_admin.add_view(AuthModelView(models.Point, SessionLocal()))
-flask_admin.add_view(AuthModelView(models.Edge, SessionLocal()))
-flask_admin.add_view(AuthModelView(models.Image, SessionLocal()))
-flask_admin.add_view(AuthModelView(models.Floor, SessionLocal()))
-flask_admin.add_view(AuthModelView(models.FloorPoint, SessionLocal()))
-flask_admin.add_view(AuthModelView(models.PointImage, SessionLocal()))

@@ -3,3 +3,4 @@
 .env
 backend/dist
 .vscode
+*/.vscode

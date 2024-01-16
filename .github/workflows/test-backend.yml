@@ -10,4 +10,4 @@ jobs:
       - name: Build the stack
         run: docker-compose up -d
       - name: Run tests
-        run: docker-compose exec -T usos-backend pytest
+        run: docker-compose exec -T backend pytest

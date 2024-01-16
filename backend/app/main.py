@@ -42,7 +42,7 @@ class SinglePageApplication(StaticFiles):
 
 
 app = FastAPI(
-    title="USOS",
+    title="System zarządzający wynikami w kręglarstwie klasycznym",
     openapi_url="/api/v1/openapi.json",
     redoc_url="/api/v1/redoc",
     docs_url="/api/v1/docs",
@@ -56,62 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get(
-    "/api/v1/points",
-    response_model=schemas.PointsResponse,
-    description="Returns a list of all available points.",
-)
-def get_points(db: Session = Depends(get_db)):
-    points = crud.get_points(db)
-    floors = crud.get_floors_for_points(db, points)
-    response = schemas.PointsResponse(points=points, floors=floors)
-    return response
-
-
-@app.get(
-    "/api/v1/route/{start_point_id}/{destination_point_id}",
-    response_model=schemas.Path,
-    responses={
-        404: {"description": "Path not found"},
-        400: {"description": "Invalid arguments"},
-    },
-    description="Generate route between two given points.",
-)
-def get_route(
-    start_point_id: int, destination_point_id: int, db: Session = Depends(get_db)
-):
-    # TODO: Check if start and destination points exist
-    # Fetch suitable edges from DB and generate route in-memory
-    pathfinding_edges = crud.get_edges_for_pathfinding(db, start_point_id)
-    try:
-        path_point_ids = graph.get_path(
-            pathfinding_edges, start_point_id, destination_point_id
-        )
-    except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Start and destination must be different"
-        )
-
-    # Get details for each point en route
-    if path_point_ids is None:
-        raise HTTPException(status_code=404, detail="Path not found")
-    path_points = crud.get_points_by_ids(db, path_point_ids)
-
-    # Orders the points according to the generated path
-    point_positions = {}
-    for position, id in enumerate(path_point_ids):
-        point_positions[id] = position
-
-    path_points = sorted(path_points, key=lambda o: point_positions[o.id])
-
-    # Retrieve floor details for present floors
-    floors = crud.get_floors_for_points(db, path_points)
-
-    # Return the results
-    path = schemas.Path(path=path_points, floors=floors)
-    return path
-
+# add routes there
 
 static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
 
