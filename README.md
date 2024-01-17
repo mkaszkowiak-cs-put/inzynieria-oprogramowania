@@ -12,8 +12,8 @@ docker-compose up -d
 ```  
 
 Frontend should be available under localhost:8000, backend should be available under localhost:80.
-The admin panel should be accessible at /api/v1/admin under the default .env credentials.
-You can view the API docs under /api/v1/docs and /api/v1/redoc
+The admin panel should be accessible at `/admin/` under the default credentials located in `.env`.
+You can view the API docs under `/api/v1/docs` and `/api/v1/redoc`
 
 ## Local development
 

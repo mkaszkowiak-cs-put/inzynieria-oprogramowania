@@ -1,5 +1,5 @@
 const changeTitle = (title: string) => {
-    document.title = `${title} - gdziejestsala.pl`;
+    document.title = `${title} - System kręglarski`;
 };
 
 export { changeTitle };

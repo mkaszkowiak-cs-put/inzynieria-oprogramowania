@@ -7,7 +7,7 @@ WORKDIR /home/app
 COPY package.json .
 COPY package-lock.json .
 
-RUN npm install
+RUN npm ci --loglevel verbose
 
 RUN mkdir -p node_modules/.cache
 RUN mkdir -p node_modules/.vite
