@@ -4,3 +4,4 @@
 backend/dist
 .vscode
 */.vscode
+backend/database.db
