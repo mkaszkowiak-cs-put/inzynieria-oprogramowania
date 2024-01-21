@@ -1,11 +1,14 @@
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
+from typing import Annotated, Generator, Any
+from fastapi import Depends
 import psycopg2  # Unused import - required for pigar
+
 
 from os import getenv
 
-SQLALCHEMY_DATABASE_URL = getenv("DATABASE_URL")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///database.db"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
@@ -20,3 +23,5 @@ def get_db():
         yield db
     finally:
         db.close()
+
+Database = Annotated[Session, Depends(get_db)]

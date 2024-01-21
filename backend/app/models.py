@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, UniqueConstraint, Date, CheckConstraint, Text
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -30,3 +30,52 @@ class User(Base):
 
     def __unicode__(self):
         return self.username
+
+class BowlingAlley(Base):
+    __tablename__ = "bowling_alley"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    tournaments = relationship("Tournament", back_populates="bowling_alley", lazy="dynamic")
+    training_scores = relationship("TrainingScore", back_populates="bowling_alley", lazy="dynamic")
+
+class Tournament(Base):
+    __tablename__ = "tournament"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String)
+    date_start = Column(Date)
+    date_end = Column(Date)
+    finished = Column(Boolean, default=False)
+
+    # N-1 relationship with BowlingAlley
+    bowling_alley_id = Column(Integer, ForeignKey("bowling_alley.id"), nullable=True)
+    bowling_alley = relationship("BowlingAlley", back_populates="tournaments")
+
+    scores = relationship("TournamentScore", back_populates="tournament")
+
+class TournamentScore(Base):
+    __tablename__ = "tournament_score"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    score = Column(Integer, nullable=False)
+    name = Column(String, nullable=False)
+    surname = Column(String, nullable=False)
+
+    # N-1 relationship with Tournament
+    tournament_id = Column(Integer, ForeignKey("tournament.id"), nullable=False)
+    tournament = relationship("Tournament", back_populates="scores")
+
+
+class TrainingScore(Base):
+    __tablename__ = "training_score"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    score = Column(Integer, nullable=False)
+    date = Column(Date)
+    notes = Column(Text)
+    private_notes = Column(Text)
+
+    # N-1 relationship with BowlingAlley
+    bowling_alley_id = Column(Integer, ForeignKey("bowling_alley.id"), nullable=True)
+    bowling_alley = relationship("BowlingAlley", back_populates="training_scores")

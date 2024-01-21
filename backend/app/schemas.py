@@ -1,5 +1,11 @@
 from __future__ import annotations
-from typing import ForwardRef
+from typing import ForwardRef, Optional
 from pydantic import BaseModel
+from datetime import date
 
-# Store DTOs there
+class TrainingScoreCreate(BaseModel):
+    score: int
+    date: date
+    notes: Optional[str] = None
+    private_notes: Optional[str] = None
+    bowling_alley_id: Optional[int] = None
