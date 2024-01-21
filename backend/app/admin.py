@@ -1,6 +1,7 @@
 import secrets
 from . import models
 import flask, flask_login, flask_admin
+from os import getenv
 from .database import SessionLocal
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -75,3 +76,9 @@ login_manager.init_app(flask_app)
 flask_admin = Admin(
     flask_app, name="System zarządzający wynikami w kręglarstwie klasycznym", index_view=AuthIndexView(url=""), template_mode="bootstrap4"
 )
+
+flask_admin.add_view(AuthModelView(models.Tournament, SessionLocal()))
+flask_admin.add_view(AuthModelView(models.TournamentScore, SessionLocal()))
+flask_admin.add_view(AuthModelView(models.User, SessionLocal()))
+flask_admin.add_view(AuthModelView(models.BowlingAlley, SessionLocal()))
+flask_admin.add_view(AuthModelView(models.TrainingScore, SessionLocal()))

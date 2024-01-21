@@ -8,8 +8,10 @@ from datetime import datetime
 import logging
 import sys
 import os
+from os import getenv
 from faker import Faker
 import random
+from werkzeug.security import generate_password_hash
 
 from .database import SessionLocal, engine, get_db, Database
 from sqlalchemy.orm import Session
@@ -20,6 +22,21 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 # Recreate the database tables, load fixtures on restart
 models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
+
+username = getenv("ADMIN_USERNAME")
+password = getenv("ADMIN_PASSWORD")
+email = getenv("ADMIN_EMAIL")
+
+
+hashed_password = generate_password_hash(password)
+new_user = models.User(
+    first_name="Administrator",
+    last_name="The Great",
+    login=username,
+    email=email,
+    password=hashed_password
+)
+
 
 bowling_alleys_data = [
     {"id": 1, "name": "Wronki"},
@@ -60,6 +77,12 @@ for tournament_id in range(1, 4):  # Assuming you have tournaments with IDs 1, 2
         tournament_scores_data.append(score_data)
 
 with SessionLocal() as db:
+    # Add the new user to the database
+    db.add(new_user)
+
+    # Commit the changes
+    db.commit()
+
     for alley_data in bowling_alleys_data:
         bowling_alley = models.BowlingAlley(**alley_data)
         db.add(bowling_alley)
@@ -129,12 +152,12 @@ app.add_middleware(
 static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
 
 
-@app.get("/api/v1/bowling_alleys/", response_model=None)
+@app.get("/api/v1/bowling_alleys/", response_model=list[schemas.BowlingAlley])
 def get_all_bowling_alleys(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[models.BowlingAlley]:
     bowling_alleys = db.query(models.BowlingAlley).offset(skip).limit(limit).all()
     return bowling_alleys
 
-@app.get("/api/v1/bowling_alleys/{bowling_alley_id}", response_model=None)
+@app.get("/api/v1/bowling_alleys/{bowling_alley_id}", response_model=schemas.BowlingAlley)
 def get_bowling_alley(bowling_alley_id: int, db: Session = Depends(get_db)) -> models.BowlingAlley:
     bowling_alley = db.query(models.BowlingAlley).filter(models.BowlingAlley.id == bowling_alley_id).first()
     if bowling_alley is None:
@@ -143,13 +166,13 @@ def get_bowling_alley(bowling_alley_id: int, db: Session = Depends(get_db)) -> m
 
 
 # GET all tournaments
-@app.get("/api/v1/tournaments", response_model=None)
+@app.get("/api/v1/tournaments", response_model=list[schemas.Tournament])
 def get_all_tournaments(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[models.Tournament]:
     tournaments = db.query(models.Tournament).offset(skip).limit(limit).all()
     return tournaments
 
 # GET a specific tournament by ID
-@app.get("/api/v1/tournaments/{tournament_id}", response_model=None) 
+@app.get("/api/v1/tournaments/{tournament_id}", response_model=schemas.Tournament) 
 def get_tournament(tournament_id: int, db: Session = Depends(get_db)) -> models.Tournament:
     tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if tournament is None:
@@ -157,7 +180,7 @@ def get_tournament(tournament_id: int, db: Session = Depends(get_db)) -> models.
     return tournament
 
 # GET scores for a specific tournament by ID
-@app.get("/api/v1/tournaments/{tournament_id}/scores", response_model=None)
+@app.get("/api/v1/tournaments/{tournament_id}/scores", response_model=list[schemas.TournamentScore])
 def get_tournament_scores(tournament_id: int, db: Session = Depends(get_db)) -> list[models.TournamentScore]:
     tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
     if tournament is None:
@@ -167,13 +190,13 @@ def get_tournament_scores(tournament_id: int, db: Session = Depends(get_db)) -> 
     return scores
 
 
-@app.get("/api/v1/training_scores", response_model=None)
+@app.get("/api/v1/training_scores", response_model=list[schemas.TrainingScore])
 def get_all_training_scores(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     training_scores = db.query(models.TrainingScore).offset(skip).limit(limit).all()
     return training_scores
 
 # POST a new training score
-@app.post("/api/v1/training_scores")
+@app.post("/api/v1/training_scores", response_model=schemas.TrainingScore)
 def create_training_score(training_score_create: schemas.TrainingScoreCreate, db: Session = Depends(get_db)):
     # Create a new TrainingScore instance
     new_training_score = models.TrainingScore(**training_score_create.dict())

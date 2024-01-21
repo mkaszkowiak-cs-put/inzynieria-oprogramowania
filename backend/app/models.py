@@ -38,6 +38,9 @@ class BowlingAlley(Base):
     name = Column(String)
     tournaments = relationship("Tournament", back_populates="bowling_alley", lazy="dynamic")
     training_scores = relationship("TrainingScore", back_populates="bowling_alley", lazy="dynamic")
+    
+    def __str__(self):
+        return f"<{self.id}> {self.name}"
 
 class Tournament(Base):
     __tablename__ = "tournament"
@@ -54,6 +57,9 @@ class Tournament(Base):
 
     scores = relationship("TournamentScore", back_populates="tournament")
 
+    def __str__(self):
+        return f"<{self.id}> {self.name}"
+
 class TournamentScore(Base):
     __tablename__ = "tournament_score"
 
@@ -65,6 +71,9 @@ class TournamentScore(Base):
     # N-1 relationship with Tournament
     tournament_id = Column(Integer, ForeignKey("tournament.id"), nullable=False)
     tournament = relationship("Tournament", back_populates="scores")
+
+    def __str__(self):
+        return f"<{self.name} {self.surname}> {self.score}"
 
 
 class TrainingScore(Base):
@@ -79,3 +88,6 @@ class TrainingScore(Base):
     # N-1 relationship with BowlingAlley
     bowling_alley_id = Column(Integer, ForeignKey("bowling_alley.id"), nullable=True)
     bowling_alley = relationship("BowlingAlley", back_populates="training_scores")
+
+    def __str__(self):
+        return f"{self.score}"

@@ -8,7 +8,7 @@ import psycopg2  # Unused import - required for pigar
 
 from os import getenv
 
-SQLALCHEMY_DATABASE_URL = f"sqlite:///database.db"
+SQLALCHEMY_DATABASE_URL = f"sqlite:///database.db"+'?check_same_thread=False'
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
