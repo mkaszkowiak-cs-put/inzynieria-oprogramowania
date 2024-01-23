@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from . import models, schemas, admin
+from . import models, schemas, admin, routes
 from typing import Tuple, List 
 from datetime import datetime
 import logging
@@ -12,7 +12,6 @@ from os import getenv
 from faker import Faker
 import random
 from werkzeug.security import generate_password_hash
-
 from .database import SessionLocal, engine, get_db, Database
 from sqlalchemy.orm import Session
 
@@ -98,8 +97,6 @@ with SessionLocal() as db:
         db.add(tournament_score)
     db.commit()
 
-
-
 # Source: https://stackoverflow.com/questions/63069190/how-to-capture-arbitrary-paths-at-one-route-in-fastapi
 # Created by Noah Cardoza
 # Modified to use regular functions instead of async
@@ -132,98 +129,44 @@ class SinglePageApplication(StaticFiles):
         return (full_path, stat_result)
 
 
-app = FastAPI(
-    title="System zarządzający wynikami w kręglarstwie klasycznym",
-    openapi_url="/api/v1/openapi.json",
-    redoc_url="/api/v1/redoc",
-    docs_url="/api/v1/docs",
-)
+class AppFactory:
+    @staticmethod
+    def create_app():
+        # Initialize FastAPI app with specific configurations
+        app = FastAPI(
+            title="System zarządzający wynikami w kręglarstwie klasycznym",
+            openapi_url="/api/v1/openapi.json",
+            redoc_url="/api/v1/redoc",
+            docs_url="/api/v1/docs",
+        )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+        # Add CORS middleware
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
-# add routes there
+        # Attach routes
+        routes.GetBowlingAlleys().attach(app)
+        routes.GetTournament().attach(app)
+        routes.GetTournaments().attach(app)
+        routes.GetTournamentScores().attach(app)
+        routes.GetTrainingScores().attach(app)
+        routes.CreateTrainingScore().attach(app)
 
-static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
+        # Mount admin Flask app
+        app.mount("/admin/", WSGIMiddleware(admin.flask_app))
 
+        # Mount static files
+        static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
+        app.mount("/static/", StaticFiles(directory=static_path), name="static")
 
-@app.get("/api/v1/bowling_alleys/", response_model=list[schemas.BowlingAlley])
-def get_all_bowling_alleys(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[models.BowlingAlley]:
-    bowling_alleys = db.query(models.BowlingAlley).offset(skip).limit(limit).all()
-    return bowling_alleys
+        # Mount SPA
+        app.mount(path="/", app=SinglePageApplication(directory="dist"), name="SPA")
 
-@app.get("/api/v1/bowling_alleys/{bowling_alley_id}", response_model=schemas.BowlingAlley)
-def get_bowling_alley(bowling_alley_id: int, db: Session = Depends(get_db)) -> models.BowlingAlley:
-    bowling_alley = db.query(models.BowlingAlley).filter(models.BowlingAlley.id == bowling_alley_id).first()
-    if bowling_alley is None:
-        raise HTTPException(status_code=404, detail="BowlingAlley not found")
-    return bowling_alley
+        return app
 
-
-# GET all tournaments
-@app.get("/api/v1/tournaments", response_model=list[schemas.Tournament])
-def get_all_tournaments(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[models.Tournament]:
-    tournaments = db.query(models.Tournament).offset(skip).limit(limit).all()
-    return tournaments
-
-# GET a specific tournament by ID
-@app.get("/api/v1/tournaments/{tournament_id}", response_model=schemas.Tournament) 
-def get_tournament(tournament_id: int, db: Session = Depends(get_db)) -> models.Tournament:
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if tournament is None:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    return tournament
-
-# GET scores for a specific tournament by ID
-@app.get("/api/v1/tournaments/{tournament_id}/scores", response_model=list[schemas.TournamentScore])
-def get_tournament_scores(tournament_id: int, db: Session = Depends(get_db)) -> list[models.TournamentScore]:
-    tournament = db.query(models.Tournament).filter(models.Tournament.id == tournament_id).first()
-    if tournament is None:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-
-    scores = db.query(models.TournamentScore).filter(models.TournamentScore.tournament_id == tournament.id).order_by(models.TournamentScore.score.desc()).all()
-    return scores
-
-
-@app.get("/api/v1/training_scores", response_model=list[schemas.TrainingScore])
-def get_all_training_scores(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    training_scores = db.query(models.TrainingScore).offset(skip).limit(limit).all()
-    return training_scores
-
-# POST a new training score
-@app.post("/api/v1/training_scores", response_model=schemas.TrainingScore)
-def create_training_score(training_score_create: schemas.TrainingScoreCreate, db: Session = Depends(get_db)):
-    # Create a new TrainingScore instance
-    new_training_score = models.TrainingScore(**training_score_create.dict())
-
-    # Save the new TrainingScore to the database
-    db.add(new_training_score)
-    db.commit()
-    db.refresh(new_training_score)
-
-    return new_training_score
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# to na koncu debilu
-
-app.mount("/admin/", WSGIMiddleware(admin.flask_app))
-app.mount("/static/", StaticFiles(directory=static_path), name="static")
-app.mount(path="/", app=SinglePageApplication(directory="dist"), name="SPA")
+app = AppFactory.create_app()
