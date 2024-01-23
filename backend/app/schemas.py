@@ -1,7 +1,6 @@
 from __future__ import annotations
-from typing import ForwardRef, Optional
+from typing import ForwardRef, Optional, List, Any
 from pydantic import BaseModel
-from pydantic_sqlalchemy import sqlalchemy_to_pydantic
 from datetime import date
 from . import models 
 
@@ -12,7 +11,42 @@ class TrainingScoreCreate(BaseModel):
     private_notes: Optional[str] = None
     bowling_alley_id: Optional[int] = None
 
-Tournament = sqlalchemy_to_pydantic(models.Tournament)
-BowlingAlley = sqlalchemy_to_pydantic(models.BowlingAlley)
-TournamentScore = sqlalchemy_to_pydantic(models.TournamentScore)
-TrainingScore = sqlalchemy_to_pydantic(models.TrainingScore)
+
+class TournamentScore(BaseModel):
+    id: int
+    score: int
+    name: str
+    surname: str
+    tournament_id: int
+
+    class Config:
+        orm_mode = True
+
+class Tournament(BaseModel):
+    id: int
+    name: str
+    date_start: date
+    date_end: date
+    finished: bool
+    bowling_alley_id: int = None
+
+    class Config:
+        orm_mode = True
+
+class BowlingAlley(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        orm_mode = True
+
+class TrainingScore(BaseModel):
+    id: int
+    score: int
+    date: date
+    notes: str
+    private_notes: str
+    bowling_alley_id: int = None 
+
+    class Config:
+        orm_mode = True
