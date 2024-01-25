@@ -152,6 +152,7 @@ class AppFactory:
         # Attach routes
         routes.GetBowlingAlleys().attach(app)
         routes.GetTournament().attach(app)
+        routes.CreateTournament().attach(app)
         routes.GetTournaments().attach(app)
         routes.GetTournamentScores().attach(app)
         routes.GetTrainingScores().attach(app)

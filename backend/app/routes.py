@@ -34,6 +34,13 @@ class TournamentRepository:
 
     def getAll(self, db, skip=0, limit=10):
         return db.query(models.Tournament).offset(skip).limit(limit).all()
+    
+    def create(self, db, tournament_create):
+        new_tournament = models.Tournament(**tournament_create.dict())
+        db.add(new_tournament)
+        db.commit()
+        db.refresh(new_tournament)
+        return new_tournament
 
 class GetTournament(AbstractController):
     def call(self, tournament_id: int, db: Session = Depends(get_db)) -> models.Tournament:
@@ -45,6 +52,15 @@ class GetTournament(AbstractController):
 
     def attach(self, app):
         app.add_api_route("/api/v1/tournaments/{tournament_id}", endpoint=self.call, response_model=schemas.Tournament)
+
+class CreateTournament(AbstractController):
+    def call(self, tournament_create: schemas.TournamentCreate, db: Session = Depends(get_db)) -> models.Tournament:
+        repository = TournamentRepository()
+        new_tournament = repository.create(db, tournament_create)
+        return new_tournament
+
+    def attach(self, app):
+        app.add_api_route("/api/v1/tournaments", endpoint=self.call, methods=["POST"], response_model=schemas.Tournament)
 
 class GetTournaments(AbstractController):
     def call(self, skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[models.Tournament]:

@@ -11,7 +11,6 @@ class TrainingScoreCreate(BaseModel):
     private_notes: Optional[str] = None
     bowling_alley_id: Optional[int] = None
 
-
 class TournamentScore(BaseModel):
     id: int
     score: int
@@ -21,6 +20,12 @@ class TournamentScore(BaseModel):
 
     class Config:
         orm_mode = True
+
+class TournamentCreate(BaseModel):
+    name: str
+    date_start: date
+    date_end: date
+    bowling_alley_id: int
 
 class Tournament(BaseModel):
     id: int
