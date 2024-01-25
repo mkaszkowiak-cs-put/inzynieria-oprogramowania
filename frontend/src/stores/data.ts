@@ -1,17 +1,18 @@
-import { defineStore } from 'pinia'
-import api from '../api/api';
+import { defineStore } from "pinia";
+import api from "../api/api";
 
 export const useDataStore = defineStore("user", {
-    state: () => ({
-        /*
+  state: () => ({
+    isLoggedIn: true
+    /*
         points: [] as Point[],
         floors: [] as Floor[]
         */
-    }),
-    actions: {
-        async fetchData() {
-            // pobieranie danych z api
-            /*
+  }),
+  actions: {
+    async fetchData() {
+      // pobieranie danych z api
+      /*
             try {
                 const response = await api.getPoints();
                 this.points = response.points;
@@ -22,6 +23,12 @@ export const useDataStore = defineStore("user", {
                 console.log(error)
             }
             */
-        }
     },
-})
+    login() {
+      this.isLoggedIn = true;
+    },
+    logout() {
+      this.isLoggedIn = false;
+    }
+  }
+});
