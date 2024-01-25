@@ -84,6 +84,9 @@ class GetTournamentScores(AbstractController):
         app.add_api_route("/api/v1/tournaments/{tournament_id}/scores", endpoint=self.call, response_model=list[schemas.TournamentScore])
 
 class TrainingScoreRepository:
+    def getById(self, db, training_score_id: int):
+        return db.query(models.TrainingScore).filter(models.TrainingScore.id == training_score_id).first()
+
     def getAll(self, db, skip=0, limit=10):
         return db.query(models.TrainingScore).offset(skip).limit(limit).all()
 
@@ -93,6 +96,19 @@ class TrainingScoreRepository:
         db.commit()
         db.refresh(new_training_score)
         return new_training_score
+    
+    def update(self, db, training_score_id, training_score_update):
+        existing_training_score = self.getById(db, training_score_id)
+
+        if existing_training_score:
+            for key, value in training_score_update.dict(exclude_none=True).items():
+                setattr(existing_training_score, key, value)
+            db.add(existing_training_score)
+            db.commit()
+            db.refresh(existing_training_score)
+            return existing_training_score
+        else:
+            raise HTTPException(status_code=404, detail="Training Score not found")
 
 class GetTrainingScores(AbstractController):
     def call(self, skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[models.TrainingScore]:
@@ -111,3 +127,13 @@ class CreateTrainingScore(AbstractController):
 
     def attach(self, app):
         app.add_api_route("/api/v1/training_scores", endpoint=self.call, methods=["POST"], response_model=schemas.TrainingScore)
+
+class UpdateTrainingScore(AbstractController):
+    def call(self, training_score_id: int, training_score_update: schemas.TrainingScoreUpdate, db: Session = Depends(get_db)) -> models.TrainingScore:
+        repository = TrainingScoreRepository()
+        updated_training_score = repository.update(db, training_score_id, training_score_update)
+        return updated_training_score
+
+    def attach(self, app):
+        app.add_api_route("/api/v1/training_scores/{training_score_id}", endpoint=self.call, methods=["PATCH"], response_model=schemas.TrainingScore)
+        app.add_api_route("/api/v1/training_scores/{training_score_id}", endpoint=self.call, methods=["PUT"], response_model=schemas.TrainingScore)

@@ -157,6 +157,7 @@ class AppFactory:
         routes.GetTournamentScores().attach(app)
         routes.GetTrainingScores().attach(app)
         routes.CreateTrainingScore().attach(app)
+        routes.UpdateTrainingScore().attach(app)
 
         # Mount admin Flask app
         app.mount("/admin/", WSGIMiddleware(admin.flask_app))
